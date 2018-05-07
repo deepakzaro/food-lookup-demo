@@ -1,20 +1,21 @@
+'use strict'
 const express = require("express");
 const fs = require("fs");
 const sqlite = require("sql.js");
-
+const pino = require("pino")()
 const filebuffer = fs.readFileSync("db/usda-nnd.sqlite3");
 
 const db = new sqlite.Database(filebuffer);
 
 const app = express();
-
+pino.info("variables declared")
 app.set("port", process.env.PORT || 3001);
-
+pino.info("server started")
 // Express only serves static assets in production
 if (process.env.NODE_ENV === "production") {
   app.use(express.static("client/build"));
+  pino.info("Running from bulid")
 }
-
 const COLUMNS = [
   "carbohydrate_g",
   "protein_g",
@@ -26,12 +27,13 @@ const COLUMNS = [
 ];
 app.get("/api/food", (req, res) => {
   const param = req.query.q;
-
+  pino.info("inside api/food")
   if (!param) {
+    pino.error(new Error('Missing required parameter `q`'))
     res.json({
       error: "Missing required parameter `q`"
     });
-    return;
+    return; 
   }
 
   // WARNING: Not for production use! The following statement
@@ -62,10 +64,12 @@ app.get("/api/food", (req, res) => {
       })
     );
   } else {
+    pino.info("returning empty array")
     res.json([]);
   }
 });
 
 app.listen(app.get("port"), () => {
+  pino.info(`Find the server at: http://localhost:${app.get("port")}/`)
   console.log(`Find the server at: http://localhost:${app.get("port")}/`); // eslint-disable-line no-console
 });
